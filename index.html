@@ -1,0 +1,120 @@
+function callender() {
+    // 1. スプレッドシートを読み込む
+    const sp = SpreadsheetApp.getActiveSpreadsheet();
+    const sh1 = sp.getSheetByName('シート1');
+  
+    // 2. カレンダーをIDで読み込む
+    const cal = CalendarApp.getCalendarById('lumikojo@ikkosha.co.jp'); 
+  
+    // 3. カレンダーのイベントの期間を指定
+    const startTime = new Date('2024/08/21 09:00:00');
+    const endTime = new Date('2024/09/20 00:00:00');
+    const event = cal.getEvents(startTime, endTime); 
+  
+    // 4. イベントをスプレッドシートへ書き出す
+    for (var i = 1; i < event.length + 1; i++) {
+      sh1.getRange('b' + i).setValue(event[i-1].getTitle()); // イベントタイトル
+      sh1.getRange('c' + i).setValue(event[i-1].getStartTime()); // イベント開始時刻　　
+      sh1.getRange('d' + i).setValue(event[i-1].getEndTime()); // イベント終了時刻
+  
+      // 所要時間を小数点第2位まで表示する
+       const durationFormula = `="(" & TEXT((D${i} - C${i}) * 24, "0.00") & ")"`;
+      sh1.getRange('a' + i).setFormula(durationFormula); // 所要時間
+    }
+  }
+
+
+  カレンダー
+  https://docs.google.com/spreadsheets/d/1iMMUbfPWRqV26EZ2BsQeg-7rzpunZjxxF1hGKkuyJm0/edit?gid=0#gid=0
+
+
+  日付が違うものは表示させない
+  function callender() {
+    // 1. スプレッドシートを読み込む
+    const sp = SpreadsheetApp.getActiveSpreadsheet();
+    const sh1 = sp.getSheetByName('シート1');
+  
+    // 2. カレンダーをIDで読み込む
+    const cal = CalendarApp.getCalendarById('lumikojo@ikkosha.co.jp'); 
+  
+    // 3. カレンダーのイベントの期間を指定
+    const startTime = new Date('2024/08/21 09:00:00');
+    const endTime = new Date('2024/09/20 00:00:00');
+    const event = cal.getEvents(startTime, endTime); 
+  
+    // 4. イベントをスプレッドシートへ書き出す
+    for (var i = 1; i < event.length + 1; i++) {
+      sh1.getRange('b' + i).setValue(event[i-1].getTitle()); // イベントタイトル
+      sh1.getRange('c' + i).setValue(event[i-1].getStartTime()); // イベント開始時刻　　
+      sh1.getRange('d' + i).setValue(event[i-1].getEndTime()); // イベント終了時刻
+  
+      // 日付部分だけを取り出す
+      const dateC = `TEXT(C${i}, "yyyy/mm/dd")`;
+      const dateD = `TEXT(D${i}, "yyyy/mm/dd")`;
+  
+      // C列とD列の日付が同じ場合のみ所要時間を計算して表示
+      const durationFormula = `=IF(${dateC}=${dateD}, "(" & TEXT((D${i} - C${i}) * 24, "0.00") & ")", "")`;
+      sh1.getRange('a' + i).setFormula(durationFormula); // 所要時間
+    }
+  }
+
+  同じ日付の場合日付が変わる前に合計してくれる
+  function callender() {
+    // 1. スプレッドシートを読み込む
+    const sp = SpreadsheetApp.getActiveSpreadsheet();
+    const sh1 = sp.getSheetByName('シート1');
+  
+    // 2. カレンダーをIDで読み込む
+    const cal = CalendarApp.getCalendarById('lumikojo@ikkosha.co.jp'); 
+  
+    // 3. カレンダーのイベントの期間を指定
+    const startTime = new Date('2024/08/21 09:00:00');
+    const endTime = new Date('2024/09/20 00:00:00');
+    const event = cal.getEvents(startTime, endTime);
+  
+    // 4. イベントをスプレッドシートへ書き出す
+    let currentRow = 1;
+    let currentDay = '';
+    let totalDuration = 0;
+  
+    for (var i = 0; i < event.length; i++) {
+      const startTime = event[i].getStartTime();
+      const endTime = event[i].getEndTime();
+  
+      const startDate = Utilities.formatDate(startTime, Session.getScriptTimeZone(), "yyyy/MM/dd");
+      const endDate = Utilities.formatDate(endTime, Session.getScriptTimeZone(), "yyyy/MM/dd");
+  
+      // C列とD列にイベントの開始日と終了日を表示
+      sh1.getRange('c' + currentRow).setValue(startTime);
+      sh1.getRange('d' + currentRow).setValue(endTime);
+  
+      // 日付が異なる場合、これまでの所要時間の合計を表示
+      if (currentDay !== startDate && currentDay !== '') {
+        // 合計時間を計算して表示
+        const totalRow = currentRow + 1;
+        sh1.getRange('b' + totalRow).setValue("合計");
+        sh1.getRange('a' + totalRow).setValue(totalDuration.toFixed(2)); // 小数点第2位まで表示
+        currentRow++;
+        totalDuration = 0; // 合計時間をリセット
+      }
+  
+      // 同じ日付の所要時間を合計
+      if (startDate === endDate) {
+        const duration = (endTime - startTime) / (1000 * 60 * 60); // 所要時間を時間単位で計算
+        totalDuration += duration;
+        sh1.getRange('b' + currentRow).setValue(event[i].getTitle()); // イベントタイトル
+        sh1.getRange('a' + currentRow).setValue(duration.toFixed(2)); // 所要時間を小数点第2位まで表示
+      }
+  
+      // 次の行へ
+      currentDay = startDate;
+      currentRow++;
+    }
+  
+    // 最後の日付の合計時間を表示
+    if (totalDuration > 0) {
+      const totalRow = currentRow + 1;
+      sh1.getRange('b' + totalRow).setValue("合計");
+      sh1.getRange('a' + totalRow).setValue(totalDuration.toFixed(2)); // 小数点第2位まで表示
+    }
+  }
