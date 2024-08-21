@@ -53,7 +53,7 @@ function callender() {
       const dateD = `TEXT(D${i}, "yyyy/mm/dd")`;
   
       // C列とD列の日付が同じ場合のみ所要時間を計算して表示
-      const durationFormula = `=IF(${dateC}=${dateD}, "(" & TEXT((D${i} - C${i}) * 24, "0.00") & ")", "")`;
+      const durationFormula = `=IF(${dateC}=${dateD}, "◾️(" & TEXT((D${i} - C${i}) * 24, "0.00") & ")", "")`;
       sh1.getRange('a' + i).setFormula(durationFormula); // 所要時間
     }
   }
